@@ -49,12 +49,7 @@ class Database:
 
         self.connection.commit()
 
-        return {
-            "id": self.cursor.lastrowid,
-            "url": url,
-            "createdAt": datetime.now(),
-            "updatedAt": datetime.now(),
-        }
+        return self.get_shorten_url(shortCode)
 
     def delete_shorten_url(self, shortCode: str):
         # Logic for deleting the shortened URL from the database
@@ -69,7 +64,7 @@ class Database:
     def get_shorten_url_stats(self, shortCode: str):
         # Logic for retrieving the statistics of the shortened URL from the database
         self.cursor.execute(
-            "SELECT clicks FROM urls WHERE short_code = ?",
+            "SELECT * FROM urls WHERE short_code = ?",
             (shortCode,)
         )
 
@@ -78,8 +73,43 @@ class Database:
             return None
         
         return {
-            "clicks": result[0]
+            "id": result[0],
+            "url": result[1],
+            "shortCode": result[2],
+            "createdAt": result[3],
+            "updatedAt": result[4],
+            "clicks": result[5]
         }
+    
+    def url_exists(self, url: str):
+        self.cursor.execute(
+            "SELECT COUNT(*) FROM urls WHERE url = ? LIMIT 1",
+            (url,)    
+        )
+
+        result = self.cursor.fetchone()
+
+        count = result[0]
+
+        if count == 0:
+            return False
+        
+        return True
+
+    def short_code_exists(self, shortCode: str):
+        self.cursor.execute(
+            "SELECT COUNT(*) FROM urls WHERE short_code = ? LIMIT 1",
+            (shortCode,)    
+        )
+
+        result = self.cursor.fetchone()
+
+        count = result[0]
+
+        if count == 0:
+            return False
+
+        return True
 
     def close(self):
         self.connection.close()
