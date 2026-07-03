@@ -2,6 +2,8 @@ from fastapi import FastAPI, status
 from pydantic import BaseModel, HttpUrl
 from datetime import datetime
 
+from controller import URLController
+
 app = FastAPI()
 
 # This class validate if a URL is valid using Pydantic's HttpUrl type. 
@@ -24,66 +26,38 @@ class URLOutputStats(URLOutput):
 
 @app.post("/shorten", response_model=URLOutput, status_code=status.HTTP_201_CREATED)
 async def create_shorten_url(url: URLInput):    
-    # Logic for creating the shortened URL
-
+    repository = URLController()
 
     # Return a JSON response with the shortened URL details
-    return {
-            "id": 1,
-            "url": "https://example.com/shortened-url",
-            "shortCode": "abc123",
-            "createdAt": datetime(2023, 1, 1, 0, 0, 0),
-            "updatedAt": datetime(2023, 1, 1, 0, 0, 0),
-        }
+    return repository.create_shorten_url(url.url)
 
+        
 
 @app.get("/shorten/{shortCode}", response_model=URLOutput, status_code=status.HTTP_200_OK)
 async def get_shorten_url(shortCode: str):
-    # Logic for retrieving the shortened URL details
-
+    repository = URLController()
 
     # Return a JSON response with the shortened URL details
-    return {
-            "id": 1,
-            "url": "https://example.com/shortened-url",
-            "shortCode": f"{shortCode}",
-            "createdAt": datetime(2023, 1, 1, 0, 0, 0),
-            "updatedAt": datetime(2023, 1, 1, 0, 0, 0),
-        }
+    return repository.get_shorten_url(shortCode)
         
 
 @app.put("/shorten/{shortCode}", response_model=URLOutput, status_code=status.HTTP_200_OK)
 async def update_shorten_url(shortCode: str, url: URLInput): 
-    # Logic for updating the shortened URL
+    repository = URLController()
 
 
-    return {
-            "id": 1,
-            "url": f"{url.url}",
-            "shortCode": f"{shortCode}",
-            "createdAt": datetime(2023, 1, 1, 0, 0, 0),
-            "updatedAt": datetime(2023, 1, 1, 0, 0, 0),
-        }
+    return repository.update_shorten_url(shortCode, url.url)
     
 
 @app.delete("/shorten/{shortCode}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_shorten_url(shortCode: str):
-    # Logic for deleting the shortened URL
-
+    repository = URLController()
     
-    return None 
+    return repository.delete_shorten_url(shortCode)
 
 
 @app.get("/shorten/{shortCode}/stats", response_model=URLOutputStats, status_code=status.HTTP_200_OK)
 async def get_shorten_url_stats(shortCode: str):
-    # Logic for retrieving the shortened URL statistics
+    repository = URLController()
 
-    # Return a JSON response with the shortened URL statistics
-    return {
-            "id": 1,
-            "url": "https://example.com/shortened-url",
-            "shortCode": f"{shortCode}",
-            "createdAt": datetime(2023, 1, 1, 0, 0, 0),
-            "updatedAt": datetime(2023, 1, 1, 0, 0, 0),
-            "clicks": 100,
-        }
+    return repository.get_shorten_url_stats(shortCode)
