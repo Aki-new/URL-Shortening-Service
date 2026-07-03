@@ -11,7 +11,7 @@ class URLController:
         url = str(url)  # Convert HttpUrl to string
         self._ensure_short_code_exists(url)
 
-        shortCode = self.generate_short_code()
+        shortCode = self._generate_short_code()
 
         data = self.db.save_shorten_url(url, shortCode)
         data["shortCode"] = shortCode
@@ -42,10 +42,14 @@ class URLController:
     def get_shorten_url_stats(self, shortCode: str):
         # If the shortCode does not exist, return a 404 error
         self._ensure_short_code_exists(shortCode)
-        
+
         return self.db.get_shorten_url_stats(shortCode)
     
-    def generate_short_code(self):
+    def _generate_short_code(self):
+        """
+            Generate a 6-character short code.
+            Use numbers and uppercase and lowercase letters.
+        """
         import random
         import string
 
@@ -55,7 +59,9 @@ class URLController:
         return result
     
     def _ensure_short_code_exists(self, shortCode: str):
-        """Lanza 404 si el shortCode NO existe."""
+        """
+            Raise a 404 of the short code does not exist.
+        """
         if not self.db.short_code_exists(shortCode):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -63,7 +69,9 @@ class URLController:
             )
 
     def _ensure_url_not_exists(self, url: str):
-        """Lanza 409 si la URL YA existe."""
+        """
+            Raise a 409 error if the URL already exists.
+        """
         if self.db.url_exists(url):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
