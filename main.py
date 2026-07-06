@@ -1,6 +1,7 @@
 from fastapi import FastAPI, status
 from pydantic import BaseModel, HttpUrl
 from datetime import datetime
+from fastapi.responses import RedirectResponse
 
 from controller import URLController
 
@@ -21,7 +22,7 @@ class URLOutput(BaseModel):
 
 # This class is used to define the output model for the shortened URL with statistics.
 class URLOutputStats(URLOutput):
-    clicks: int
+    accessCount: int
 
 
 @app.post("/shorten", response_model=URLOutput, status_code=status.HTTP_201_CREATED)
@@ -34,11 +35,14 @@ async def create_shorten_url(url: URLInput):
         
 
 @app.get("/shorten/{shortCode}", response_model=URLOutput, status_code=status.HTTP_200_OK)
-async def get_shorten_url(shortCode: str):
+async def redirect_to_url(shortCode: str):
     repository = URLController()
-
-    # Return a JSON response with the shortened URL details
-    return repository.get_shorten_url(shortCode)
+    data = repository.get_shorten_url(shortCode)
+    
+    # Incrementar contador de clicks
+    repository.increment_clicks(shortCode)
+    
+    return data
         
 
 @app.put("/shorten/{shortCode}", response_model=URLOutput, status_code=status.HTTP_200_OK)

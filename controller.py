@@ -19,6 +19,8 @@ class URLController:
         data = self.db.save_shorten_url(url, shortCode, self.cursor, self.conn)
         data["shortCode"] = shortCode
 
+        print(f"DEBUG: tipo={type(data)}, valor={data}")  # ← Agrega esto
+
         return data
 
     def get_shorten_url(self, shortCode: str):
@@ -47,6 +49,9 @@ class URLController:
         self._ensure_short_code_exists(shortCode)
 
         return self.db.get_shorten_url_stats(shortCode, self.cursor)
+    
+    def increment_clicks(self, shortCode: str):
+        self.db.increment_counter(shortCode, self.cursor, self.conn)
     
     def _generate_unique_short_code(self):
         """

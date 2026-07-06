@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS "urls" (
 	"short_code"	INTEGER NOT NULL UNIQUE,
 	"created_at"	TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
 	"updated_at"	TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
-	"accessCount"	INTEGER NOT NULL DEFAULT 0,
+	"access_count"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("url_id" AUTOINCREMENT)
 );

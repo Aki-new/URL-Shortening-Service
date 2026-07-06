@@ -60,8 +60,8 @@ class Database:
 
         # Logic for updating the shortened URL in the database
         cursor.execute(
-            "UPDATE urls SET url = ? WHERE short_code = ? updated_at = ?",
-            (url, shortCode, time_and_hours)
+            "UPDATE urls SET url = ?, updated_at = ? WHERE short_code = ?",
+            (url, time_and_hours, shortCode)
         )
 
         connection.commit()
@@ -143,6 +143,28 @@ class Database:
             return False
 
         return True
+    
+    def increment_counter(self, shortCode: str, cursor, conn):
+        """
+            Increments the access count for a URL.
+        """
+
+        cursor.execute(
+            "SELECT access_count FROM urls WHERE short_code = ?",
+            (shortCode,)
+        )
+
+        result = cursor.fetchone()
+
+        acces_counter = result[0]
+        acces_counter += 1
+        
+        cursor.execute(
+            "UPDATE urls SET access_count = ? WHERE short_code = ?",
+            (acces_counter, shortCode)
+        )
+
+        conn.commit()
 
     def close(self, connection):
         connection.close()
