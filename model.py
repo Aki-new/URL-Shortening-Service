@@ -1,5 +1,5 @@
 import sqlite3 as db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Database:
     def conect(self, path: str, name: str):
@@ -12,18 +12,21 @@ class Database:
         """
             Save a URL to the database
         """
+
+        time_and_hours = datetime.now(timezone.utc).isoformat(timespec='seconds')
+
         # Logic for saving the shortened URL to the database
         cursor.execute(
-            "INSERT INTO urls (url, short_code) VALUES (?, ?)",
-            (url, shortCode)
+            "INSERT INTO urls (url, short_code, created_at, updated_at) VALUES (?, ?, ?, ?)",
+            (url, shortCode, time_and_hours, time_and_hours)
         )
         connection.commit()
         return {
             "id": cursor.lastrowid,
             "url": url,
             "shortCode": shortCode,
-            "createdAt": datetime.now(),
-            "updatedAt": datetime.now(),
+            "createdAt": time_and_hours,
+            "updatedAt": time_and_hours,
         }
     
     def get_shorten_url(self, shortCode: str, cursor):
@@ -52,10 +55,13 @@ class Database:
         """
             Updates a URL associated with a shortcode in the database
         """
+
+        time_and_hours = datetime.now(timezone.utc).isoformat(timespec='seconds')
+
         # Logic for updating the shortened URL in the database
         cursor.execute(
-            "UPDATE urls SET url = ? WHERE short_code = ?",
-            (url, shortCode)
+            "UPDATE urls SET url = ? WHERE short_code = ? updated_at = ?",
+            (url, shortCode, time_and_hours)
         )
 
         connection.commit()
@@ -95,7 +101,7 @@ class Database:
             "shortCode": result[2],
             "createdAt": result[3],
             "updatedAt": result[4],
-            "clicks": result[5]
+            "accessCount": result[5]
         }
     
     def url_exists(self, url: str, cursor):
