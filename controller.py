@@ -2,17 +2,19 @@ from pydantic import HttpUrl
 from fastapi import HTTPException, status
 from datetime import datetime
 from model import Database
+import random
+import string
 
 class URLController:
     def __init__(self):
         self.db = Database()
-        self.cursor, self.conn = self.db.conectar()
+        self.cursor, self.conn = self.db.conect("database", "url_shortener")
 
     def create_shorten_url(self, url: HttpUrl):
         url = str(url)  # Convert HttpUrl to string
         self._ensure_url_not_exists(url)
 
-        shortCode = self._generate_short_code()
+        shortCode = self._generate_unique_short_code()
 
         data = self.db.save_shorten_url(url, shortCode, self.cursor, self.conn)
         data["shortCode"] = shortCode
@@ -38,7 +40,7 @@ class URLController:
         # If the shortCode does not exist, return a 404 error
         self._ensure_short_code_exists(shortCode)
 
-        return self.db.delete_shorten_url(shortCode, self.cursor, self.conn)
+        self.db.delete_shorten_url(shortCode, self.cursor, self.conn)
 
     def get_shorten_url_stats(self, shortCode: str):
         # If the shortCode does not exist, return a 404 error
@@ -46,23 +48,20 @@ class URLController:
 
         return self.db.get_shorten_url_stats(shortCode, self.cursor)
     
-    def _generate_short_code(self):
+    def _generate_unique_short_code(self):
         """
-            Generate a 6-character short code.
+            Generate a unique 6-character short code.
             Use numbers and uppercase and lowercase letters.
         """
-        import random
-        import string
-
         chars = string.ascii_letters + string.digits
         while True:
             code = ''.join(random.choices(chars, k=6))
-            if not self.db.short_code_exists(code):
+            if not self.db.short_code_exists(code, self.cursor):
                 return code
     
     def _ensure_short_code_exists(self, shortCode: str):
         """
-            Raise a 404 of the short code does not exist.
+            Raise a 404 if the short code does not exist.
         """
         if not self.db.short_code_exists(shortCode, self.cursor):
             raise HTTPException(

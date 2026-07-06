@@ -2,7 +2,7 @@ import sqlite3 as db
 from datetime import datetime
 
 class Database:
-    def conectar(self, path: str, name: str):
+    def conect(self, path: str, name: str):
         connection = db.connect(f"{path}/{name}.db")
         cursor = connection.cursor()
 
@@ -19,7 +19,7 @@ class Database:
         )
         connection.commit()
         return {
-            "id": self.cursor.lastrowid,
+            "id": cursor.lastrowid,
             "url": url,
             "shortCode": shortCode,
             "createdAt": datetime.now(),
@@ -36,7 +36,7 @@ class Database:
             (shortCode,)
         )
 
-        result = self.cursor.fetchone()
+        result = cursor.fetchone()
         if result is None:
             return None
         
@@ -60,7 +60,7 @@ class Database:
 
         connection.commit()
 
-        return self.get_shorten_url(shortCode)
+        return self.get_shorten_url(shortCode, cursor)
 
     def delete_shorten_url(self, shortCode: str, cursor, connection):
         """
@@ -109,7 +109,7 @@ class Database:
             (url,)    
         )
 
-        result = self.cursor.fetchone()
+        result = cursor.fetchone()
 
         count = result[0]
 
@@ -129,7 +129,7 @@ class Database:
             (shortCode,)    
         )
 
-        result = self.cursor.fetchone()
+        result = cursor.fetchone()
 
         count = result[0]
 
