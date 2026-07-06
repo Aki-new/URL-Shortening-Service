@@ -9,7 +9,7 @@ class URLController:
 
     def create_shorten_url(self, url: HttpUrl):
         url = str(url)  # Convert HttpUrl to string
-        self._ensure_short_code_exists(url)
+        self._ensure_url_not_exists(url)
 
         shortCode = self._generate_short_code()
 
@@ -20,7 +20,7 @@ class URLController:
 
     def get_shorten_url(self, shortCode: str):
         # If the short code does not exist, neither does the URL.
-        not self._ensure_short_code_exists(shortCode)
+        self._ensure_short_code_exists(shortCode)
         # Logic for retrieving the shortened URL details
         return self.db.get_shorten_url(shortCode)
 
@@ -54,9 +54,10 @@ class URLController:
         import string
 
         chars = string.ascii_letters + string.digits
-        result = ''.join(random.choices(chars, k=6))
-
-        return result
+        while True:
+            code = ''.join(random.choices(chars, k=6))
+            if not self.db.short_code_exists(code):
+                return code
     
     def _ensure_short_code_exists(self, shortCode: str):
         """
