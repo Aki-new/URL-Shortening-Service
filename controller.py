@@ -58,6 +58,12 @@ class URLController:
 
         return self.db.get_shorten_url_stats(shortCode, self.cursor)
     
+    def access_url(self, shortCode):
+        data = self.get_shorten_url(shortCode)
+        url = data["url"]
+        self.increment_clicks(shortCode)
+        return url
+    
     def increment_clicks(self, shortCode: str):
         self.db.increment_counter(shortCode, self.cursor, self.conn)
     

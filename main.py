@@ -36,7 +36,7 @@ async def create_shorten_url(url: URLInput):
         
 
 @app.get("/shorten/{shortCode}", response_model=URLOutput, status_code=status.HTTP_200_OK)
-async def redirect_to_url(shortCode: str):
+async def get_short_code_info(shortCode: str):
     repository = URLController()
     data = repository.get_shorten_url(shortCode)
     
@@ -65,3 +65,17 @@ async def get_shorten_url_stats(shortCode: str):
     repository = URLController()
 
     return repository.get_shorten_url_stats(shortCode)
+
+@app.get("/{shortCode}")
+async def redirect(shortCode: str):
+    repository = URLController()
+    url = repository.access_url(shortCode)
+    
+    return RedirectResponse(
+        url, 
+        status_code=status.HTTP_301_MOVED_PERMANENTLY
+    )
+
+@app.get("/", status_code=status.HTTP_200_OK)
+async def health():
+    return {"status": "online"}
