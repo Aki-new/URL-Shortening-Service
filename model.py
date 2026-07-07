@@ -51,7 +51,7 @@ class Database:
             "updatedAt": result[4],
         }
 
-    def update_shorten_url(self, shortCode: str, url: str, cursor, connection):
+    def update_shorten_url(self, shortCode: str, url: str, new_shortCode: str, cursor, connection):
         """
             Updates a URL associated with a shortcode in the database
         """
@@ -60,13 +60,13 @@ class Database:
 
         # Logic for updating the shortened URL in the database
         cursor.execute(
-            "UPDATE urls SET url = ?, updated_at = ? WHERE short_code = ?",
-            (url, time_and_hours, shortCode)
+            "UPDATE urls SET url = ?, short_code = ?, updated_at = ? WHERE short_code = ?",
+            (url, new_shortCode, time_and_hours, shortCode)
         )
 
         connection.commit()
 
-        return self.get_shorten_url(shortCode, cursor)
+        return self.get_shorten_url(new_shortCode, cursor)
 
     def delete_shorten_url(self, shortCode: str, cursor, connection):
         """

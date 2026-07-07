@@ -11,6 +11,7 @@ app = FastAPI()
 # If the URL is not valid, it will raise a ValidationError.
 class URLInput(BaseModel):
     url: HttpUrl
+    shortCode: str | None = None
 
 # This class is used to define the output model for the shortened URL.
 class URLOutput(BaseModel):
@@ -30,7 +31,7 @@ async def create_shorten_url(url: URLInput):
     repository = URLController()
 
     # Return a JSON response with the shortened URL details
-    return repository.create_shorten_url(url.url)
+    return repository.create_shorten_url(url.url, url.shortCode)
 
         
 
@@ -49,7 +50,7 @@ async def redirect_to_url(shortCode: str):
 async def update_shorten_url(shortCode: str, url: URLInput): 
     repository = URLController()
 
-    return repository.update_shorten_url(shortCode, url.url)
+    return repository.update_shorten_url(shortCode, url.url, url.shortCode)
     
 
 @app.delete("/shorten/{shortCode}", status_code=status.HTTP_204_NO_CONTENT)

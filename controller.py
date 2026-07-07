@@ -10,16 +10,18 @@ class URLController:
         self.db = Database()
         self.cursor, self.conn = self.db.conect("database", "url_shortener")
 
-    def create_shorten_url(self, url: HttpUrl):
+    def create_shorten_url(self, url: HttpUrl, shortCode: str | None):
         url = str(url)  # Convert HttpUrl to string
         self._ensure_url_not_exists(url)
 
-        shortCode = self._generate_unique_short_code()
+        # If ShortCode is None, it generates one; otherwise, it uses the provided ShortCode.
+        if shortCode is None:
+            shortCode = self._generate_unique_short_code()
+        else:
+            self._ensure_not_short_code_exists(shortCode)
 
         data = self.db.save_shorten_url(url, shortCode, self.cursor, self.conn)
         data["shortCode"] = shortCode
-
-        print(f"DEBUG: tipo={type(data)}, valor={data}")  # ← Agrega esto
 
         return data
 
@@ -29,14 +31,20 @@ class URLController:
         # Logic for retrieving the shortened URL details
         return self.db.get_shorten_url(shortCode, self.cursor)
 
-    def update_shorten_url(self, shortCode: str, url: HttpUrl):
+    def update_shorten_url(self, shortCode: str, url: HttpUrl, new_shortCode: str | None):
         url = str(url)  # Convert HttpUrl to string
         # If the shortCode does not exist, return a 404 error
         self._ensure_short_code_exists(shortCode)
+
+        if not (new_shortCode is None):
+            # If the new shortCode is already registered, return a 409 error
+            self._ensure_not_short_code_exists(new_shortCode)
+        else:
+            new_shortCode = shortCode
         # If the URL is already registered, return a 409 error
         self._ensure_url_not_exists(url)
 
-        return self.db.update_shorten_url(shortCode, url, self.cursor, self.conn)
+        return self.db.update_shorten_url(shortCode, url, new_shortCode, self.cursor, self.conn)
 
     def delete_shorten_url(self, shortCode: str):
         # If the shortCode does not exist, return a 404 error
@@ -72,6 +80,16 @@ class URLController:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Shortened URL not found."
+            )
+        
+    def _ensure_not_short_code_exists(self, shortCode: str):
+        """
+            Raise a 409 if the short code does not exist.
+        """
+        if self.db.short_code_exists(shortCode, self.cursor):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Short Code is already registered."
             )
 
     def _ensure_url_not_exists(self, url: str):
