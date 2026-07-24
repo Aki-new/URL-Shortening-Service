@@ -1,43 +1,86 @@
-# Servicio de Acortamiento de URL
+# 🔗 URL Shortening Service (Python MVC & Base62 Encoding)
 
 Español | [English](README.es.md)
 
-Una API RESTful robusta, ligera y de alto rendimiento que acorta URL largas en códigos cortos únicos y fáciles de gestionar, y maneja redirecciones de alta velocidad. Desarrollada como parte de la serie de desafíos de backend de [roadmap.sh](https://roadmap.sh/projects/url-shortening-service).
+Un servicio backend para acortar enlaces de forma eficiente, diseñado bajo el patrón de arquitectura **MVC (Modelo-Vista-Controlador)** en Python, con soporte para redirecciones HTTP, conteo de métricas y algoritmo propio de codificación **Base62**.  
+
+Desarrollada como parte de la serie de desafíos de backend de [roadmap.sh](https://roadmap.sh/projects/url-shortening-service).
 
 ---
 
-## 🚀 Funcionalidades
+## ✨ Características Principales
 
-- **Acortamiento de URL**: Convierte enlaces web largos en códigos cortos alfanuméricos seguros.
-
-- **Códigos cortos personalizados**: Permite alias personalizados definidos por el usuario (con validación automática de longitud y caracteres).
-
-- **Redireccionamiento rápido**: Enruta instantáneamente los códigos cortos (`/abc123`) a su destino original mediante códigos de estado HTTP estándar (`302 Found`).
-
-- **Análisis de acceso**: Realiza un seguimiento preciso de los clics y accesos para cada URL corta generada.
-- **Validación de entrada**: Comprobaciones rigurosas del formato de entrada, URL con estructura válida y restricciones de cadena para proteger la estabilidad del backend.
-
-- **Persistencia de datos**: Clara segregación del mecanismo de persistencia mediante modelos de almacenamiento relacional estándar o esquemas JSON estructurados.
+* **🏛️ Arquitectura MVC Limpia:** Separación estricta de capas entre rutas/API (`main.py`), lógica de negocio (`controller.py`), capa de datos (`model.py`) y esquema SQL (`schema.sql`).
+* **🔠 Algoritmo de Codificación Base62:** Generación eficiente de claves cortas e identificadores únicos combinando timestamp y caracteres alfanuméricos.
+* **📊 Analítica y Métricas:** Seguimiento automático de la cantidad de clics (`click_count`) y timestamps de creación y última actualización.
+* **↪️ Redirección HTTP 302:** Manejo correcto del protocolo HTTP para rastrear accesos sin forzar el caché permanente del navegador.
+* **🗄️ Persistencia de Datos:** Integración con base de datos SQL (SQLite/PostgreSQL) para la gestión segura de mapeos de URLs.
 
 ---
 
-## 🛠️ Arquitectura y lógica del sistema
+## 📂 Arquitectura del Proyecto
 
-El servicio implementa un diseño limpio y por capas que desacopla completamente la lógica, los endpoints de la API y las capas de datos:
+```text
+├── main.py            # Capa de presentación y manejo de peticiones/rutas HTTP
+├── controller.py      # Lógica de negocio y algoritmo de acortamiento (Base62)
+├── model.py           # Capa de acceso a datos (Queries, Insert, Updates)
+├── init_database.py   # Script de inicialización idempotente de la BD
+├── schema.sql         # Esquema DDL con tabla, índices y restricciones
+└── README.md          # Documentación del proyecto
+```
 
-1. **Endpoints de la API (Capa de controlador)**: Valida las solicitudes HTTP entrantes, comprueba la estructura de la carga útil y asigna los encabezados de respuesta HTTP y los códigos de estado correctos.
+## 🛠️ Tecnologías Utilizadas
 
-2. **Lógica de negocio (Capa de servicio)**: Gestiona los algoritmos de generación de hash/código, comprueba la unicidad, incrementa los contadores estadísticos y administra las restricciones de negocio.
+* **Lenguaje:** Python 3.x
+* **Patrón de Diseño:** MVC (`Model-View-Controller`)
+* **Base de Datos:** SQL (`SQLite` / `PostgreSQL`)
+* **Algoritmo:** Custom `Base62` Encoding
 
-3. **Acceso a datos (Capa de persistencia)**: Abstrae las interacciones de lectura/escritura con el almacén de datos.
+## 🚀 Instalación y Uso
+### Prerrequisitos
+Tener Python 3 instalado en el sistema.
 
-### Lógica de acortamiento y hash
-Cuando se recibe una URL larga:
-- Si se proporciona un alias personalizado, el sistema valida su patrón y comprueba su disponibilidad.
+### Pasos
 
-- Si no se proporciona ningún código, se genera una cadena única de 6 caracteres aleatoria/hash mediante un diccionario de mapeo alfanumérico (`[a-zA-Z0-9]`), lo que evita colisiones con la base de datos antes de la inserción.
+1. **Clonar el repositorio:**
+```bash
+  git clone https://github.com/Aki-new/URL-Shortening-Service.git
+  cd URL-Shortening-Service
+```
 
---
+2. **Inicializar la Base de Datos:**
+```bash
+  python init_database.py
+```
+
+3. **Ejecutar el servicio:**
+```bash
+  python main.py
+```
+
+## 💡 Flujo de Trabajo (Workflow)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Usuario
+    participant Main as main.py (API/Rutas)
+    participant Ctrl as controller.py (Lógica/Base62)
+    participant Model as model.py (Data Layer)
+    participant DB as SQL Database
+
+    Usuario->>Main: Envía URL Larga
+    Main->>Ctrl: Solicita acortar URL
+    Ctrl->>Ctrl: Genera clave única (Base62)
+    Ctrl->>Model: Guarda mapeo (URL larga <-> Clave)
+    Model->>DB: INSERT INTO urls
+    Main-->>Usuario: Retorna URL Corta
+    
+    Note over Usuario, DB: Proceso de Redirección
+    Usuario->>Main: Consulta URL Corta (/abc12)
+    Main->>Model: Busca URL original e incrementa clics
+    Model->>DB: UPDATE click_count / SELECT original_url
+    Main-->>Usuario: Redirección HTTP 302 a URL Original
+```
 
 ## 📋 Especificación de la API
 
@@ -52,7 +95,7 @@ Cuando se recibe una URL larga:
   "shortCode": "example"
 }
 ```
-**Nota**: shortCode es opcional; Si no se agrega, se genera uno aleatoriamente.
+**Nota**: shortCode es opcional; Si no se agrega, se genera uno aleatoriamente.  
 **Respuesta:** `(201 Creado)`
 
 ```json
@@ -67,11 +110,10 @@ Cuando se recibe una URL larga:
 ```
 ### 2. Redirigir una URL
 * **Endpoint:** `GET /yourShortCode`
-* **Content-Type:** `application/json`
 * **Respuesta:** `(302 Encontrado)` (Redirige al usuario directamente a la URL de destino).
 
 ### 3. Recuperar estadísticas de URL
-* **Endpoint:** `GET /shorten/yourShortCode`
+* **Endpoint:** `GET /shorten/yourShortCode/stats`
 * **Respuesta:** `(200 OK)`
 
 ```json
@@ -112,47 +154,3 @@ Cuando se recibe una URL larga:
 ### 5. Eliminar una URL acortada
 * Endpoint: `DELETE /shorten/yourShortCode`
 * Respuesta: `(204)` Sin contenido
-
-## 💻 Cómo replicar y ejecutar Localmente
-Siga estos pasos para configurar, instalar dependencias y alojar el entorno en cualquier máquina externa:
-
-### Lista de requisitos previos
-Asegúrese de que su entorno cumpla con estos requisitos.
-
-* Entorno de ejecución: Python 3.10 o superior
-* Git instalado en su sistema operativo.
-
-### 1. Clonar el repositorio
-``` bash
-git clone https://github.com/Aki-new/URL-Shortening-Service
-cd URL-Shortening-Service
-```
-
-### 2. Instalación y configuración de dependencias
-```bash
-python -m venv venv
-source venv/bin/activate # En Windows, usar: venv\Scripts\activate
-pip install -r requirements.txt
-python init_database.py
-```
-
-### 3. Iniciar el servidor
-Ejecutar el punto de entrada de la aplicación:
-
-Ejecución de Python: ``python main.py o uvicorn app.main:app --reload``
-
-El servidor local se iniciará al instante. Normalmente, puedes acceder a la configuración base del servidor en http://localhost:8080
-
-## 🧪 Pruebas con cURL
-Puedes comprobar la funcionalidad de tus endpoints directamente desde la terminal:
-
-Crea un código shortCode:
-```bash
-curl -X POST http://localhost:8080/api/shorten \
--H "Content-Type: application/json" \
--d '{"url": "https://google.com"}'
-```
-Obtén datos analíticos específicos:
-```bash
-curl -X GET http://localhost:8080/shorten/YOUR-SHORT-CODE
-```
